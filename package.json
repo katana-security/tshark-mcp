@@ -1,0 +1,22 @@
+{
+  "name": "tshark-mcp",
+  "version": "3.0.0",
+  "description": "MCP server for pcap/pcapng file analysis via tshark",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "keywords": ["mcp", "wireshark", "tshark", "pcap", "network-analysis", "katana"],
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" },
+  "dependencies": {
+    "fastmcp": "^3.31.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.pcap
+*.pcapng
+.env
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
