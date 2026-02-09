@@ -46,6 +46,14 @@ export function validateInterfaceName(iface: string): void {
   }
 }
 
+export function validateKeylogPath(rawPath?: string): string | undefined {
+  if (!rawPath) return undefined;
+  if (SHELL_META.test(rawPath))
+    throw new Error('sslKeylogFile path contains disallowed characters.');
+  const resolved = path.resolve(rawPath);
+  return resolved;
+}
+
 export function validateBpfFilter(filter?: string): void {
   if (!filter) return;
   if (filter.length > 500)

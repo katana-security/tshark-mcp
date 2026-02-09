@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import { runTshark } from '../tshark';
 import { resolveTargetPcap, assertFileExists } from '../validation';
+import { getKeylogForPcap } from '../state';
 
 export function registerFollowStream(server: FastMCP): void {
   server.addTool({
@@ -33,7 +34,7 @@ export function registerFollowStream(server: FastMCP): void {
 
       const stdout = await runTshark(
         ['-r', resolved, '-qz', `follow,${followType},ascii,${args.streamIndex}`],
-        { timeout: 60_000 }
+        { timeout: 60_000, sslKeylogFile: getKeylogForPcap(args.label) }
       );
 
       let output = stdout;

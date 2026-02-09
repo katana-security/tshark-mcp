@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import { runTshark } from '../tshark';
-import { validatePcapPath, assertFileExists } from '../validation';
+import { validatePcapPath, assertFileExists, validateKeylogPath } from '../validation';
 import { registerPcap, deriveUniqueLabel } from '../state';
 
 const fsStat = promisify(fs.stat);
@@ -40,10 +40,14 @@ export function registerLoadPcap(server: FastMCP): void {
     parameters: z.object({
       pcapPath: z.string().describe('Path to the pcap/pcapng file'),
       label: z.string().optional().describe('Optional label for this pcap. If omitted, derived from filename.'),
+      sslKeylogFile: z.string().optional().describe('Path to SSLKEYLOGFILE for TLS decryption. If provided, all queries against this pcap will automatically decrypt TLS traffic.'),
     }),
     execute: async (args) => {
       const resolved = validatePcapPath(args.pcapPath);
       await assertFileExists(resolved);
+
+      const keylogPath = validateKeylogPath(args.sslKeylogFile);
+      if (keylogPath) await assertFileExists(keylogPath);
 
       const stat = await fsStat(resolved);
       const sizeMB = (stat.size / (1024 * 1024)).toFixed(2);
@@ -74,15 +78,17 @@ export function registerLoadPcap(server: FastMCP): void {
         sizeMB: parseFloat(sizeMB),
         packets,
         loadedAt: new Date(),
+        sslKeylogFile: keylogPath,
       });
 
-      const result = {
+      const result: Record<string, unknown> = {
         label,
         path: resolved,
         sizeMB: parseFloat(sizeMB),
         packets,
         protocolHierarchy: parseProtocolHierarchy(capinfos),
       };
+      if (keylogPath) result.sslKeylogFile = keylogPath;
 
       return JSON.stringify(result, null, 2);
     },

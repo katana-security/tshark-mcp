@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import { runTshark } from '../tshark';
 import { resolveTargetPcap, assertFileExists } from '../validation';
+import { getKeylogForPcap } from '../state';
 
 export function registerInspectPacket(server: FastMCP): void {
   server.addTool({
@@ -32,7 +33,7 @@ export function registerInspectPacket(server: FastMCP): void {
 
       const stdout = await runTshark(
         ['-r', resolved, '-Y', filter, '-T', 'json'],
-        { timeout: 30_000 }
+        { timeout: 30_000, sslKeylogFile: getKeylogForPcap(args.label) }
       );
 
       return stdout;

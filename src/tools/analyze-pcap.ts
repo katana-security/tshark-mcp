@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import { runTshark } from '../tshark';
 import { resolveTargetPcap, assertFileExists } from '../validation';
+import { getKeylogForPcap } from '../state';
 import { parseProtocolHierarchy } from './load-pcap';
 
 export function registerAnalyzePcap(server: FastMCP): void {
@@ -16,6 +17,8 @@ export function registerAnalyzePcap(server: FastMCP): void {
       const resolved = resolveTargetPcap(args.label);
       await assertFileExists(resolved);
 
+      const sslOpts = { sslKeylogFile: getKeylogForPcap(args.label) };
+
       const [
         protoHier,
         tcpConv,
@@ -25,21 +28,21 @@ export function registerAnalyzePcap(server: FastMCP): void {
         tcpEndpoints,
         httpHostsRaw,
       ] = await Promise.all([
-        runTshark(['-r', resolved, '-qz', 'io,phs']),
-        runTshark(['-r', resolved, '-qz', 'conv,tcp']),
-        runTshark(['-r', resolved, '-qz', 'conv,udp']),
+        runTshark(['-r', resolved, '-qz', 'io,phs'], sslOpts),
+        runTshark(['-r', resolved, '-qz', 'conv,tcp'], sslOpts),
+        runTshark(['-r', resolved, '-qz', 'conv,udp'], sslOpts),
         runTshark([
           '-r', resolved, '-T', 'fields', '-e', 'dns.qry.name', '-Y', 'dns.qry.name',
-        ]).catch(() => ''),
+        ], sslOpts).catch(() => ''),
         runTshark([
           '-r', resolved, '-T', 'fields',
           '-e', 'tls.handshake.extensions_server_name',
           '-Y', 'tls.handshake.type == 1',
-        ]).catch(() => ''),
-        runTshark(['-r', resolved, '-qz', 'endpoints,tcp']),
+        ], sslOpts).catch(() => ''),
+        runTshark(['-r', resolved, '-qz', 'endpoints,tcp'], sslOpts),
         runTshark([
           '-r', resolved, '-T', 'fields', '-e', 'http.host', '-Y', 'http.host',
-        ]).catch(() => ''),
+        ], sslOpts).catch(() => ''),
       ]);
 
       const dedup = (raw: string): string[] => [

@@ -7,6 +7,7 @@ export interface PcapEntry {
   sizeMB: number;
   packets: number | string;
   loadedAt: Date;
+  sslKeylogFile?: string;
 }
 
 const pcapRegistry = new Map<string, PcapEntry>();
@@ -37,6 +38,11 @@ export function getAllPcaps(): PcapEntry[] {
 
 export function removePcap(label: string): boolean {
   return pcapRegistry.delete(label);
+}
+
+export function getKeylogForPcap(label: string): string | undefined {
+  const entry = pcapRegistry.get(label);
+  return entry?.sslKeylogFile;
 }
 
 export function deriveUniqueLabel(baseName: string): string {

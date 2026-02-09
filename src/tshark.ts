@@ -45,6 +45,7 @@ export async function findTshark(): Promise<string> {
 export interface TsharkOptions {
   maxBuffer?: number;
   timeout?: number;
+  sslKeylogFile?: string;
 }
 
 export async function runTshark(
@@ -52,8 +53,12 @@ export async function runTshark(
   opts: TsharkOptions = {}
 ): Promise<string> {
   const tshark = await findTshark();
-  const merged = { ...TSHARK_DEFAULTS, ...opts };
-  const { stdout } = await execFileAsync(tshark, args, merged);
+  const { sslKeylogFile, ...execOpts } = opts;
+  const merged = { ...TSHARK_DEFAULTS, ...execOpts };
+  const finalArgs = sslKeylogFile
+    ? ['-o', `tls.keylog_file:${sslKeylogFile}`, ...args]
+    : args;
+  const { stdout } = await execFileAsync(tshark, finalArgs, merged);
   return stdout;
 }
 

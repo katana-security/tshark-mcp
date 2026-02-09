@@ -7,6 +7,7 @@ import {
   validateDisplayFilter,
   validateFieldName,
 } from '../validation';
+import { getKeylogForPcap } from '../state';
 
 export function registerQueryPcap(server: FastMCP): void {
   server.addTool({
@@ -51,7 +52,9 @@ export function registerQueryPcap(server: FastMCP): void {
       }
       tsharkArgs.push('-E', 'separator=/t', '-E', 'quote=n');
 
-      const stdout = await runTshark(tsharkArgs);
+      const stdout = await runTshark(tsharkArgs, {
+        sslKeylogFile: getKeylogForPcap(args.label),
+      });
       const rawLines = stdout.trim().split('\n').filter(Boolean);
       const page = rawLines.slice(offset, offset + limit);
 
